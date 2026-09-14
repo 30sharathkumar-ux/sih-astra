@@ -1,7 +1,20 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Sidebar = () => {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate('/login');
+    } catch (err) {
+      console.error('[Sidebar] Sign-out error:', err);
+    }
+  };
+
   const navItems = [
     { name: 'Dashboard', path: '/', exact: true, icon: (
       <svg className="w-5 h-5 stroke-current" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -102,12 +115,15 @@ const Sidebar = () => {
           </button>
         </div>
 
-        <a className="flex items-center gap-3 px-4 py-2 text-white/70 hover:text-white font-semibold text-xs tracking-wider uppercase transition group" href="#logout">
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-3 px-4 py-2 text-white/70 hover:text-white font-semibold text-xs tracking-wider uppercase transition group w-full text-left"
+        >
           <svg className="w-4 h-4 stroke-current transform rotate-180 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" strokeLinecap="round" strokeLinejoin="round"></path>
           </svg>
           <span>LOG OUT</span>
-        </a>
+        </button>
       </div>
     </aside>
   );
