@@ -1,21 +1,16 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext(null);
 
-/**
- * AuthProvider wraps the entire app.
- * It:
- *   - Listens for Supabase auth state changes
- *   - Exposes session, user, profile, loading state
- *   - Provides signInWithGoogle() and signOut()
- *   - Auto-creates a profile row on first login
- */
 export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  // loading = true until we know definitively whether a session exists
   const [loading, setLoading] = useState(true);
+  // Ref to prevent calling setLoading(false) more than once
+  const initializedRef = useRef(false);
 
   // ─── Fetch profile from Supabase ─────────────────────────────────────────
   const fetchProfile = async (userId) => {
@@ -26,7 +21,7 @@ export const AuthProvider = ({ children }) => {
       .single();
 
     if (error && error.code !== 'PGRST116') {
-      // PGRST116 = "no rows returned" — that's expected on first login
+      // PGRST116 = "no rows returned" — expected on first login
       console.error('[Auth] Error fetching profile:', error);
     }
     return data || null;
@@ -68,37 +63,58 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
-  // ─── Bootstrap: check existing session on mount ──────────────────────────
+  // ─── Bootstrap: subscribe first, then check session ──────────────────────
+  // IMPORTANT ORDER: register onAuthStateChange BEFORE calling getSession().
+  // Supabase v2 fires INITIAL_SESSION via the listener when the page loads
+  // with a hash fragment (#access_token=...) from OAuth redirect.
+  // If we call getSession() first, we miss that event.
   useEffect(() => {
-    const bootstrap = async () => {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-
-      if (currentSession?.user) {
-        await createProfileIfMissing(currentSession.user);
-      }
-      setLoading(false);
-    };
-
-    bootstrap();
-
-    // Subscribe to auth state changes (login, logout, token refresh)
+    // 1. Subscribe to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
+        console.log('[Auth] onAuthStateChange event:', event, 'session:', !!newSession);
+
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
         if (newSession?.user) {
-          await createProfileIfMissing(newSession.user);
+          // Don't await profile creation here — let it run in background
+          // so ProtectedRoute gets unblocked immediately
+          createProfileIfMissing(newSession.user);
         } else {
           setProfile(null);
         }
 
-        // Only clear loading after initial check
-        if (loading) setLoading(false);
+        // Mark initialization done on the first event (INITIAL_SESSION or SIGNED_IN)
+        if (!initializedRef.current) {
+          initializedRef.current = true;
+          setLoading(false);
+        }
       }
     );
+
+    // 2. Manually call getSession() as a fallback for pages that load
+    //    without a hash fragment (e.g. normal refresh with stored session).
+    //    If onAuthStateChange fires first with INITIAL_SESSION, the
+    //    initializedRef guard prevents double-calling setLoading(false).
+    supabase.auth.getSession().then(({ data: { session: currentSession }, error }) => {
+      if (error) {
+        console.error('[Auth] getSession error:', error);
+      }
+      console.log('[Auth] getSession result:', !!currentSession);
+
+      // If the listener hasn't fired yet, settle state from getSession
+      if (!initializedRef.current) {
+        initializedRef.current = true;
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        setLoading(false);
+
+        if (currentSession?.user) {
+          createProfileIfMissing(currentSession.user);
+        }
+      }
+    });
 
     return () => subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -106,11 +122,15 @@ export const AuthProvider = ({ children }) => {
 
   // ─── Auth actions ─────────────────────────────────────────────────────────
   const signInWithGoogle = async () => {
+    // redirectTo must be in Supabase → Authentication → URL Configuration → Redirect URLs
+    // Use /auth/callback so a dedicated public route handles the token exchange
+    // before ProtectedRoute sees the user.
+    const redirectTo = `${window.location.origin}/auth/callback`;
+    console.log('[Auth] signInWithGoogle redirectTo:', redirectTo);
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/`,
-      },
+      options: { redirectTo },
     });
     if (error) throw error;
   };
@@ -150,10 +170,6 @@ export const AuthProvider = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-/**
- * useAuth — import this in any component to access auth state.
- * Never call supabase.auth.* directly from components.
- */
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within <AuthProvider>');

@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
+import AuthCallback from './pages/AuthCallback';
 
 // Simple placeholder for routes under development
 const Placeholder = ({ title }) => (
@@ -33,8 +34,9 @@ const App = () => {
     <Router>
       <AuthProvider>
         <Routes>
-          {/* ── Public route ── */}
+          {/* ── Public routes ── */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
 
           {/* ── Protected routes ── */}
           <Route
