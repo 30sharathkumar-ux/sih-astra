@@ -103,8 +103,26 @@ export const AuthProvider = ({ children }) => {
       }
       console.log('[Auth] getSession result:', !!currentSession);
 
-      // If the listener hasn't fired yet, settle state from getSession
+      // If the listener hasn't fired yet, settle state from getSession.
       if (!initializedRef.current) {
+        // PRODUCTION FIX: If the URL hash contains an OAuth token, Supabase
+        // needs a moment to parse it and fire INITIAL_SESSION / SIGNED_IN via
+        // onAuthStateChange. On production (Vercel), getSession() can resolve
+        // with null *before* that event fires, causing ProtectedRoute to
+        // redirect to /login prematurely.
+        //
+        // When an OAuth hash is present AND getSession() returned null, do NOT
+        // settle loading here. Let onAuthStateChange deliver the real session.
+        const hasOAuthHash = window.location.hash.includes('access_token=') ||
+                             window.location.hash.includes('error_description=');
+
+        if (!currentSession && hasOAuthHash) {
+          // onAuthStateChange will fire shortly with the real session.
+          // Do not mark loading=false yet — ProtectedRoute must keep waiting.
+          console.log('[Auth] OAuth hash detected; deferring to onAuthStateChange.');
+          return;
+        }
+
         initializedRef.current = true;
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
