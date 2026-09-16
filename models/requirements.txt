@@ -1,6 +1,0 @@
-# computer vision and related packages
-ultralytics
-torch
-torchvision
-opencv-python
-pillow
