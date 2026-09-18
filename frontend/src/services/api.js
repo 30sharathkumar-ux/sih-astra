@@ -37,9 +37,14 @@ export const getDiseaseDetections = async () => {
   return diseaseDetections;
 };
 
-export const getWeather = async () => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return weatherData;
+export const getWeather = async (latitude = 12.9716, longitude = 77.5946) => {
+  // Temporary fallback coordinates (Bengaluru).
+  // TODO: Replace with the farmer's saved farm location or browser geolocation.
+  const response = await fetch(`${API_BASE_URL}/api/weather?latitude=${latitude}&longitude=${longitude}`);
+  if (!response.ok) {
+    throw new Error(`Weather API error: ${response.status}`);
+  }
+  return await response.json();
 };
 
 export const getAlerts = async () => {
