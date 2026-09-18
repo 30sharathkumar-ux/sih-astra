@@ -38,8 +38,9 @@ export const getDiseaseDetections = async () => {
 };
 
 export const getWeather = async (latitude = 12.9716, longitude = 77.5946) => {
-  // Temporary fallback coordinates (Bengaluru).
-  // TODO: Replace with the farmer's saved farm location or browser geolocation.
+  // Coordinates are provided by the useGeolocation hook in Dashboard.
+  // The default values (Bengaluru) are only used as a last-resort fallback
+  // when geolocation is denied or unavailable — not as a permanent location.
   const response = await fetch(`${API_BASE_URL}/api/weather?latitude=${latitude}&longitude=${longitude}`);
   if (!response.ok) {
     throw new Error(`Weather API error: ${response.status}`);

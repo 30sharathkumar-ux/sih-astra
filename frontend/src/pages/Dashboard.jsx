@@ -6,6 +6,7 @@ import GreenhouseVisual from '../components/GreenhouseVisual';
 import ProductionSummary from '../components/ProductionSummary';
 import VerticalFarmFeature from '../components/VerticalFarmFeature';
 import DiseaseAlert from '../components/DiseaseAlert';
+import useGeolocation from '../hooks/useGeolocation';
 import { 
   getFarmData, 
   getSensorReadings, 
@@ -14,6 +15,10 @@ import {
   getProductionData 
 } from '../services/api';
 
+// Fallback coordinates used only when geolocation is denied or unavailable.
+const FALLBACK_LAT = 12.9716;
+const FALLBACK_LON = 77.5946;
+
 const Dashboard = () => {
   const [farmData, setFarmData] = useState(null);
   const [sensors, setSensors] = useState(null);
@@ -21,30 +26,61 @@ const Dashboard = () => {
   const [diseases, setDiseases] = useState([]);
   const [production, setProduction] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [weatherError, setWeatherError] = useState(null);
 
+  // Request geolocation once on mount; does not re-fire on re-renders.
+  const { coords, status: geoStatus, error: geoError } = useGeolocation();
+
+  // isFallback is true when we are using Bengaluru defaults instead of the
+  // farmer's real location (geolocation denied or unavailable).
+  const isFallback = geoStatus === 'denied' || geoStatus === 'unavailable' || geoStatus === 'timeout';
+
+  // ── Non-weather data: load immediately, independent of geolocation ──────────
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchStaticData = async () => {
       try {
-        const [farmRes, sensorRes, weatherRes, diseaseRes, prodRes] = await Promise.all([
+        const [farmRes, sensorRes, diseaseRes, prodRes] = await Promise.all([
           getFarmData(),
           getSensorReadings(),
-          getWeather(),
           getDiseaseDetections(),
-          getProductionData()
+          getProductionData(),
         ]);
         setFarmData(farmRes);
         setSensors(sensorRes);
-        setWeather(weatherRes);
         setDiseases(diseaseRes);
         setProduction(prodRes);
       } catch (error) {
-        console.error("Error fetching dashboard data:", error);
+        console.error('Error fetching dashboard data:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+    fetchStaticData();
   }, []);
+
+  // ── Weather data: fetch once geolocation resolves (granted or fallback) ─────
+  useEffect(() => {
+    // Still waiting for the browser to respond
+    if (geoStatus === 'loading') return;
+
+    const lat = coords?.latitude ?? FALLBACK_LAT;
+    const lon = coords?.longitude ?? FALLBACK_LON;
+
+    const fetchWeather = async () => {
+      try {
+        setWeatherError(null);
+        const weatherRes = await getWeather(lat, lon);
+        setWeather(weatherRes);
+      } catch (err) {
+        console.error('Error fetching weather:', err);
+        setWeatherError('Could not load weather data.');
+      }
+    };
+
+    fetchWeather();
+    // Re-run only when geoStatus changes (i.e., exactly once after geolocation resolves).
+    // coords is stable once geoStatus leaves 'loading', so this is safe.
+  }, [geoStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
     return <div className="flex-1 flex items-center justify-center">Loading dashboard...</div>;
@@ -66,7 +102,14 @@ const Dashboard = () => {
       {/* TopGridSection */}
       <section className="grid grid-cols-1 md:grid-cols-12 gap-5">
         <div className="md:col-span-12 lg:col-span-4 flex flex-col">
-          <WeatherCard weather={weather} sensors={sensors} />
+          <WeatherCard
+            weather={weather}
+            sensors={sensors}
+            geoStatus={geoStatus}
+            geoError={geoError}
+            isFallback={isFallback}
+            weatherError={weatherError}
+          />
         </div>
         <div className="md:col-span-12 lg:col-span-4 flex flex-col">
           <PlantGrowthCard />
