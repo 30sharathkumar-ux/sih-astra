@@ -3,7 +3,7 @@
  *
  * Provides localStorage helpers for offline-first weather caching.
  * Key: 'astra_weather_cache'
- * Stored shape: { data: <API response>, lastUpdated: <ms timestamp> }
+ * Stored shape: { data: <API response>, location: <LocationObj>, lastUpdated: <ms timestamp> }
  */
 
 const CACHE_KEY = 'astra_weather_cache';
@@ -11,10 +11,11 @@ const CACHE_KEY = 'astra_weather_cache';
 /**
  * Persist a successful weather API response to localStorage.
  * @param {object} data - The full /api/weather response object.
+ * @param {object} location - The human-readable location object (optional).
  */
-export const saveWeatherCache = (data) => {
+export const saveWeatherCache = (data, location = null) => {
   try {
-    const entry = { data, lastUpdated: Date.now() };
+    const entry = { data, location, lastUpdated: Date.now() };
     localStorage.setItem(CACHE_KEY, JSON.stringify(entry));
   } catch (e) {
     // localStorage may be unavailable (private browsing, storage quota exceeded)
@@ -24,7 +25,7 @@ export const saveWeatherCache = (data) => {
 
 /**
  * Load a previously cached weather response from localStorage.
- * @returns {{ data: object, lastUpdated: number } | null}
+ * @returns {{ data: object, location: object|null, lastUpdated: number } | null}
  */
 export const loadWeatherCache = () => {
   try {

@@ -8,6 +8,7 @@ import VerticalFarmFeature from '../components/VerticalFarmFeature';
 import DiseaseAlert from '../components/DiseaseAlert';
 import useGeolocation from '../hooks/useGeolocation';
 import { loadWeatherCache, saveWeatherCache } from '../utils/weatherCache';
+import { getHumanReadableLocation } from '../utils/reverseGeocode';
 import {
   getFarmData,
   getSensorReadings,
@@ -29,6 +30,7 @@ const Dashboard = () => {
 
   // ── Weather state ──────────────────────────────────────────────────────────
   const [weather, setWeather]           = useState(null);
+  const [weatherLocation, setWeatherLocation] = useState(null);
   const [isCached, setIsCached]         = useState(false);
   const [lastUpdated, setLastUpdated]   = useState(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
@@ -57,6 +59,7 @@ const Dashboard = () => {
     const cached = loadWeatherCache();
     if (cached) {
       setWeather(cached.data);
+      setWeatherLocation(cached.location || null);
       setIsCached(true);
       setLastUpdated(cached.lastUpdated);
       hasWeatherRef.current = true;
@@ -76,14 +79,26 @@ const Dashboard = () => {
       setWeatherError(null);
 
       try {
-        const freshData = await getWeather(lat, lon);
+        const results = await Promise.allSettled([
+          getWeather(lat, lon),
+          getHumanReadableLocation(lat, lon)
+        ]);
+
+        if (results[0].status === 'rejected') {
+          throw results[0].reason;
+        }
+
+        const freshData = results[0].value;
+        const freshLoc = results[1].status === 'fulfilled' ? results[1].value : null;
+
         const now = Date.now();
 
         // STEP C: fresh fetch succeeded
         setWeather(freshData);
+        setWeatherLocation(freshLoc);
         setIsCached(false);
         setLastUpdated(now);
-        saveWeatherCache(freshData);   // update localStorage cache
+        saveWeatherCache(freshData, freshLoc);   // update localStorage cache
         hasWeatherRef.current = true;
       } catch (err) {
         console.error('[Dashboard] Weather fetch failed:', err);
@@ -154,6 +169,7 @@ const Dashboard = () => {
         <div className="md:col-span-12 lg:col-span-4 flex flex-col">
           <WeatherCard
             weather={weather}
+            weatherLocation={weatherLocation}
             geoStatus={geoStatus}
             geoError={geoError}
             isFallback={isFallback}

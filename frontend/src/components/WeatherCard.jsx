@@ -19,6 +19,7 @@ import { generateWeatherInsights } from '../utils/weatherDecisionEngine';
  */
 const WeatherCard = ({
   weather,
+  weatherLocation,
   geoStatus,
   geoError,
   isFallback,
@@ -83,16 +84,18 @@ const WeatherCard = ({
   // Weather condition (emoji + label) from WMO code for current
   const condition = getWeatherCondition(weatherCode);
 
-  // Location label from backend
+  // Determine the display location string
   const loc = weather?.location ?? null;
-  const locationLabel = loc?.latitude != null && loc?.longitude != null
+  const rawCoordsLabel = loc?.latitude != null && loc?.longitude != null
     ? (() => {
         const lat = loc.latitude.toFixed(2);
         const lon = loc.longitude.toFixed(2);
         const tz  = loc.timezone;
         return tz ? `${tz} (${lat}°, ${lon}°)` : `${lat}°, ${lon}°`;
       })()
-    : null;
+    : 'Location unavailable';
+    
+  const locationDisplay = weatherLocation?.displayString || rawCoordsLabel;
 
   // Day / date display
   const today_ = new Date();
@@ -121,21 +124,19 @@ const WeatherCard = ({
           <h3 className="text-xs font-semibold text-gray-400 tracking-wide">
             Current Weather
           </h3>
-          {isFallback && (
-            <span
-              title={geoError || 'Using default location (Bengaluru)'}
-              className="text-[9px] font-semibold bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full"
-            >
-              Fallback location
-            </span>
-          )}
         </div>
 
-        {locationLabel && (
-          <p className="text-[10px] text-gray-400 mb-2 truncate" title={locationLabel}>
-            📍 {locationLabel}
+        <div>
+          <p className="text-[12px] font-medium text-gray-700 truncate mb-0.5" title={locationDisplay}>
+            📍 {locationDisplay}
           </p>
-        )}
+          {isFallback && (
+            <p className="text-[10px] text-amber-500 mb-2 truncate">
+              Using default location
+            </p>
+          )}
+          {!isFallback && <div className="mb-2"></div>}
+        </div>
 
         {/* ── Section 1: Right Now ── */}
         <div className="flex items-center justify-between mt-1">
