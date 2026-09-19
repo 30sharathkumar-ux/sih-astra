@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import AuthCallback from './pages/AuthCallback';
+import WeatherPage from './pages/Weather';
 
 // Simple placeholder for routes under development
 const Placeholder = ({ title }) => (
@@ -75,7 +76,7 @@ const App = () => {
             path="/weather"
             element={
               <ProtectedRoute>
-                <AppShell><Placeholder title="Weather Forecast" /></AppShell>
+                <AppShell><WeatherPage /></AppShell>
               </ProtectedRoute>
             }
           />
