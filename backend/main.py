@@ -5,9 +5,17 @@ import httpx
 app = FastAPI(title="SIH Astra AgriTech API")
 
 # CORS Configuration
+# Covers common Vite local dev ports (5173–5176) — Vite increments the port
+# if the preferred one is already in use.
 origins = [
     "http://localhost:5173",
+    "http://localhost:5174",
     "http://localhost:5175",
+    "http://localhost:5176",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+    "http://127.0.0.1:5175",
+    "http://127.0.0.1:5176",
 ]
 
 app.add_middleware(

@@ -29,6 +29,13 @@ const useGeolocation = () => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         if (cancelled) return;
+        // ── TEMP DIAGNOSTIC (remove before commit) ─────────────────────────
+        console.group('[GPS] Position acquired');
+        console.log('accuracy (m):', position.coords.accuracy);
+        console.log('latitude:    ', position.coords.latitude);
+        console.log('longitude:   ', position.coords.longitude);
+        console.groupEnd();
+        // ── END TEMP DIAGNOSTIC ────────────────────────────────────────────
         setCoords({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
@@ -52,9 +59,12 @@ const useGeolocation = () => {
         setCoords(null);
       },
       {
-        enableHighAccuracy: false, // faster, lower power — sufficient for weather
-        timeout: 8000,
-        maximumAge: 300000, // accept a cached position up to 5 minutes old
+        // High accuracy forces the GPS chip rather than Wi-Fi/cell triangulation.
+        // This produces a precise enough position for BigDataCloud to return a
+        // neighbourhood name instead of just the city.
+        enableHighAccuracy: true,
+        timeout: 12000,    // GPS chip may need extra time for satellite lock
+        maximumAge: 0,     // always get a fresh position — no cached coarse fixes
       }
     );
 

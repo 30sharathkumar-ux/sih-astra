@@ -84,18 +84,12 @@ const WeatherCard = ({
   // Weather condition (emoji + label) from WMO code for current
   const condition = getWeatherCondition(weatherCode);
 
-  // Determine the display location string
-  const loc = weather?.location ?? null;
-  const rawCoordsLabel = loc?.latitude != null && loc?.longitude != null
-    ? (() => {
-        const lat = loc.latitude.toFixed(2);
-        const lon = loc.longitude.toFixed(2);
-        const tz  = loc.timezone;
-        return tz ? `${tz} (${lat}°, ${lon}°)` : `${lat}°, ${lon}°`;
-      })()
-    : 'Location unavailable';
-    
-  const locationDisplay = weatherLocation?.displayString || rawCoordsLabel;
+  // Build two-line location from the normalized geocode result.
+  // Fall through to 'Location unavailable' rather than showing raw coordinates.
+  const locDisplayName   = weatherLocation?.displayName?.trim()   || weatherLocation?.displayString?.trim() || null;
+  const locSecondaryLine = weatherLocation?.secondaryLine?.trim() || null;
+  const locationHeadline = locDisplayName || 'Location unavailable';
+  const hasValidLocation = !!locDisplayName;
 
   // Day / date display
   const today_ = new Date();
@@ -127,9 +121,14 @@ const WeatherCard = ({
         </div>
 
         <div>
-          <p className="text-[12px] font-medium text-gray-700 truncate mb-0.5" title={locationDisplay}>
-            📍 {locationDisplay}
+          <p className="text-[12px] font-semibold text-gray-700 truncate mb-0" title={locationHeadline}>
+            📍 {locationHeadline}
           </p>
+          {hasValidLocation && locSecondaryLine && (
+            <p className="text-[10px] text-gray-400 font-medium truncate pl-4 mb-0.5">
+              {locSecondaryLine}
+            </p>
+          )}
           {isFallback && (
             <p className="text-[10px] text-amber-500 mb-2 truncate">
               Using default location
@@ -249,8 +248,14 @@ const WeatherCard = ({
         </h3>
         <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
           {upcomingDays.map((dayData, i) => {
-            const dateObj = new Date(dayData.date);
-            const shortDay = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+            // Parse YYYY-MM-DD as local calendar date (not UTC) to avoid day-shift in IST/similar
+            let shortDay = '--';
+            if (dayData.date) {
+              const [yr, mo, dy] = dayData.date.split('-').map(Number);
+              if (yr && mo && dy) {
+                shortDay = new Date(yr, mo - 1, dy).toLocaleDateString('en-US', { weekday: 'short' });
+              }
+            }
             const dayCondition = getWeatherCondition(dayData.weatherCode);
             const dayHigh = dayData.temperatureMax != null ? Math.round(dayData.temperatureMax) : '--';
             const dayLow = dayData.temperatureMin != null ? Math.round(dayData.temperatureMin) : '--';

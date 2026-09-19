@@ -19,6 +19,8 @@ const WeatherPage = () => {
   const [weatherError, setWeatherError] = useState(null);
 
   const hasWeatherRef = useRef(false);
+  // Mirror of weatherLocation for reading inside effects without stale closure
+  const weatherLocationRef = useRef(null);
 
   // Geo
   const { coords, status: geoStatus, error: geoError } = useGeolocation();
@@ -29,56 +31,97 @@ const WeatherPage = () => {
     const cached = loadWeatherCache();
     if (cached) {
       setWeather(cached.data);
-      setWeatherLocation(cached.location || null);
+      const cachedLoc = cached.location || null;
+      setWeatherLocation(cachedLoc);
+      weatherLocationRef.current = cachedLoc;
       setIsCached(true);
       setLastUpdated(cached.lastUpdated);
       hasWeatherRef.current = true;
     }
   }, []);
 
-  // ── 2. Fetch fresh weather in background once geo resolves ──────────────────
+  // ── 2. Fetch fresh weather + location once geo resolves ──────────────────
+  //
+  // Architecture:
+  //   • Fires once when geoStatus leaves 'loading' (dep: [geoStatus]).
+  //   • hasFetchedRef prevents a second fetch if the effect somehow runs again.
+  //   • Weather and geocoding run in parallel; neither failure blocks the other.
+  //   • isCached is set to FALSE only when a NETWORK response arrives.
+  //     It never goes back to true after that.
+  //   • Location is never overwritten with null if a good value already exists.
+  const hasFetchedRef = useRef(false);
+
   useEffect(() => {
     if (geoStatus === 'loading') return;
+    if (hasFetchedRef.current) return; // only fetch once
+    hasFetchedRef.current = true;
 
-    const lat = coords?.latitude ?? FALLBACK_LAT;
+    const lat = coords?.latitude  ?? FALLBACK_LAT;
     const lon = coords?.longitude ?? FALLBACK_LON;
 
-    const fetchFreshWeather = async () => {
+    console.log('[Weather] geoStatus:', geoStatus);
+
+    const fetchAll = async () => {
       setWeatherLoading(true);
       setWeatherError(null);
 
       try {
-        const results = await Promise.allSettled([
+        // Both run in parallel; neither can block the other
+        const [weatherResult, locationResult] = await Promise.allSettled([
           getWeather(lat, lon),
-          getHumanReadableLocation(lat, lon)
+          getHumanReadableLocation(lat, lon),
         ]);
 
-        if (results[0].status === 'rejected') {
-          throw results[0].reason;
+        console.log('[Weather] weather fetch:', weatherResult.status);
+        console.log('[Weather] reverse geocode:', locationResult.status);
+
+        // ── Location (always independent of weather result) ─────────────────
+        const freshLoc = locationResult.status === 'fulfilled' ? locationResult.value : null;
+        // Never replace a valid cached location with null
+        const prevLoc     = weatherLocationRef.current;
+        const resolvedLoc = freshLoc || prevLoc;
+        // Always update ref so weather-fail cache-save path sees the latest value
+        weatherLocationRef.current = resolvedLoc;
+        // Update state if the resolved value actually changed
+        if (resolvedLoc !== prevLoc) {
+          setWeatherLocation(resolvedLoc);
         }
+        console.log('[Weather] location source:', freshLoc ? 'gps' : (prevLoc ? 'cache' : 'none'));
 
-        const freshData = results[0].value;
-        const freshLoc = results[1].status === 'fulfilled' ? results[1].value : null;
-        const now = Date.now();
+        // ── Weather ─────────────────────────────────────────────────────────
+        if (weatherResult.status === 'fulfilled') {
+          const freshData = weatherResult.value;
+          const now = Date.now();
 
-        setWeather(freshData);
-        setWeatherLocation(freshLoc);
-        setIsCached(false);
-        setLastUpdated(now);
-        saveWeatherCache(freshData, freshLoc);
-        hasWeatherRef.current = true;
-      } catch (err) {
-        console.error('[WeatherPage] Fetch failed:', err);
-        if (!hasWeatherRef.current) {
-          setWeatherError('Weather temporarily unavailable. Please check your connection.');
+          // Explicitly mark as LIVE (not cached). This is the only place
+          // where isCached is set to false — on a confirmed network success.
+          setWeather(freshData);
+          setIsCached(false);      // ← LIVE data: clear the offline indicator
+          setLastUpdated(now);
+          saveWeatherCache(freshData, resolvedLoc);
+          hasWeatherRef.current = true;
+        } else {
+          console.error('[Weather] weather fetch failed:', weatherResult.reason?.message);
+          // Keep cached weather — do NOT change isCached; it stays true (Offline)
+          if (!hasWeatherRef.current) {
+            setWeatherError('Weather temporarily unavailable. Please check your connection.');
+          }
+          // Persist improved location alongside existing cached weather data
+          if (freshLoc && hasWeatherRef.current) {
+            const existingCache = loadWeatherCache();
+            if (existingCache?.data) {
+              saveWeatherCache(existingCache.data, resolvedLoc);
+            }
+          }
         }
       } finally {
         setWeatherLoading(false);
       }
     };
 
-    fetchFreshWeather();
-  }, [geoStatus, coords]);
+    fetchAll();
+  }, [geoStatus]); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   // ── 3. Render functions ──────────────────────────────────────────────────────
 
@@ -110,23 +153,55 @@ const WeatherPage = () => {
   const weatherCode = current?.weatherCode ?? current?.weathercode ?? 0;
   const condition = getWeatherCondition(weatherCode);
 
-  const loc = weather?.location ?? null;
-  const rawCoordsLabel = loc?.latitude != null && loc?.longitude != null
-    ? (loc.timezone ? `${loc.timezone} (${loc.latitude.toFixed(2)}°, ${loc.longitude.toFixed(2)}°)` : `${loc.latitude.toFixed(2)}°, ${loc.longitude.toFixed(2)}°`)
-    : 'Location unavailable';
-    
-  const locationDisplay = weatherLocation?.displayString || rawCoordsLabel;
+  // Build two-line location display from the normalized geocode result.
+  // displayName  = most specific line (e.g. "Roopen Agrahara, Bommanahalli")
+  // secondaryLine = context line     (e.g. "Bengaluru, Karnataka")
+  // Never show raw coordinates, timezone, or empty strings to the farmer.
+  const locDisplayName   = weatherLocation?.displayName?.trim()   || weatherLocation?.displayString?.trim() || null;
+  const locSecondaryLine = weatherLocation?.secondaryLine?.trim() || null;
+
+  // Headline shown next to the 📍 pin
+  const locationHeadline  = locDisplayName || 'Location unavailable';
+  // Whether we have a valid resolved location at all
+  const hasValidLocation  = !!locDisplayName;
+
   const cacheAgeLabel = formatCacheAge(lastUpdated);
 
   // Insights
   const insights = generateWeatherInsights(weather);
 
-  // Safe extraction for Today's Weather section
-  const todayMax = daily?.[0]?.temperatureMax ?? '--';
-  const todayMin = daily?.[0]?.temperatureMin ?? '--';
-  const rainProb = daily?.[0]?.precipitationProbability ?? '--';
-  const rainfall = daily?.[0]?.precipitation ?? '--';
-  const et0 = daily?.[0]?.et0 ?? '--';
+  // ── Forecast date handling ────────────────────────────────────────────────
+  // todayYMD is computed from the user's local calendar (no UTC shift)
+  const todayLocal = new Date();
+  const todayYMD = [
+    todayLocal.getFullYear(),
+    String(todayLocal.getMonth() + 1).padStart(2, '0'),
+    String(todayLocal.getDate()).padStart(2, '0'),
+  ].join('-');
+
+  // Parse YYYY-MM-DD as a LOCAL calendar date (avoids UTC midnight shift in IST)
+  const parseLocalDate = (dateStr) => {
+    if (!dateStr) return null;
+    const [year, month, day] = dateStr.split('-').map(Number);
+    if (!year || !month || !day) return null;
+    return new Date(year, month - 1, day);
+  };
+
+  // Filter the raw daily array: keep today and all future dates, drop past dates
+  const filteredDaily = (daily ?? []).filter(
+    (d) => d.date && d.date >= todayYMD
+  );
+
+  // Today's entry is the first item in filteredDaily whose date === todayYMD
+  // (may be absent if the API hasn't yet returned today's entry)
+  const todayEntry = filteredDaily.find((d) => d.date === todayYMD) ?? null;
+
+  // Safe extraction for Today's Weather section — always from the actual today entry
+  const todayMax  = todayEntry?.temperatureMax ?? '--';
+  const todayMin  = todayEntry?.temperatureMin ?? '--';
+  const rainProb  = todayEntry?.precipitationProbability ?? '--';
+  const rainfall  = todayEntry?.precipitation ?? '--';
+  const et0       = todayEntry?.et0 ?? '--';
 
   return (
     <div className="flex-1 flex flex-col p-5 sm:p-6 lg:p-8 space-y-6 overflow-y-auto max-w-[1400px] w-full mx-auto">
@@ -136,9 +211,14 @@ const WeatherPage = () => {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 tracking-tight">Weather Dashboard</h1>
           <div className="mt-2 flex flex-col">
-            <p className="text-brand-green font-medium flex items-center gap-1.5 text-lg">
-              📍 {locationDisplay}
+            <p className="text-brand-green font-semibold flex items-center gap-1.5 text-lg leading-tight">
+              📍 {locationHeadline}
             </p>
+            {hasValidLocation && locSecondaryLine && (
+              <p className="text-sm text-gray-500 font-medium mt-0.5 pl-6">
+                {locSecondaryLine}
+              </p>
+            )}
             {isFallback && (
               <p className="text-amber-500 text-sm font-medium mt-0.5 flex items-center gap-1.5">
                 Using default location
@@ -147,6 +227,7 @@ const WeatherPage = () => {
           </div>
         </div>
         <div className="flex flex-col items-start md:items-end">
+          {/* Freshness badge — Live when fresh from network, Offline when from cache */}
           {weatherLoading && isCached && (
             <span className="text-sm font-medium text-brand-green animate-pulse mb-1">Refreshing...</span>
           )}
@@ -154,14 +235,14 @@ const WeatherPage = () => {
             <div className="bg-gray-100 px-3 py-1.5 rounded-full flex items-center gap-2 border border-gray-200 shadow-sm">
               <span className="w-2 h-2 rounded-full bg-gray-400"></span>
               <span className="text-xs font-semibold text-gray-600">
-                Offline • {cacheAgeLabel}
+                Offline{cacheAgeLabel ? ` • ${cacheAgeLabel}` : ''}
               </span>
             </div>
           ) : (
             <div className="bg-green-50 px-3 py-1.5 rounded-full flex items-center gap-2 border border-green-100 shadow-sm">
               <span className="w-2 h-2 rounded-full bg-brand-green"></span>
               <span className="text-xs font-semibold text-brand-green">
-                {cacheAgeLabel || 'Updated just now'}
+                Live{cacheAgeLabel ? ` • ${cacheAgeLabel}` : ' • Updated just now'}
               </span>
             </div>
           )}
@@ -186,7 +267,7 @@ const WeatherPage = () => {
                   <span className="text-6xl sm:text-7xl font-bold text-gray-800 tracking-tighter">
                     {current?.temperature != null ? Math.round(current.temperature) : '--'}°C
                   </span>
-                  <span className="text-xl font-medium text-gray-500 mt-1">{condition.text}</span>
+                  <span className="text-xl font-medium text-gray-500 mt-1">{condition.label}</span>
                 </div>
               </div>
               
@@ -214,19 +295,19 @@ const WeatherPage = () => {
           <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-card border border-gray-100">
             <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">7-Day Forecast</h2>
             <div className="flex gap-4 overflow-x-auto pb-4 snap-x scrollbar-hide -mx-2 px-2">
-              {daily?.map((day, idx) => {
+              {filteredDaily.map((day, idx) => {
                 const dayCode = day.weatherCode ?? day.weathercode ?? 0;
                 const dayCond = getWeatherCondition(dayCode);
-                const isToday = idx === 0;
-                
-                let dayName = 'Err';
-                if (day.time) {
-                  const date = new Date(day.time);
-                  dayName = date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-                }
+
+                // Parse the date as a local calendar date (no UTC shift)
+                const parsedDate = parseLocalDate(day.date);
+                const isToday = day.date === todayYMD;
+                const dayName = parsedDate
+                  ? parsedDate.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()
+                  : 'N/A';
 
                 return (
-                  <div key={idx} className={`snap-start min-w-[110px] flex-shrink-0 flex flex-col items-center justify-between p-4 rounded-2xl ${isToday ? 'bg-brand-surface border-2 border-brand-green/20' : 'bg-gray-50/80 border border-gray-100'} transition-all`}>
+                  <div key={day.date || idx} className={`snap-start min-w-[110px] flex-shrink-0 flex flex-col items-center justify-between p-4 rounded-2xl ${isToday ? 'bg-brand-surface border-2 border-brand-green/20' : 'bg-gray-50/80 border border-gray-100'} transition-all`}>
                     <span className="text-sm font-bold text-gray-500">{isToday ? 'TODAY' : dayName}</span>
                     <span className="text-4xl my-3 drop-shadow-sm">{dayCond.emoji}</span>
                     <div className="flex items-center gap-2 mb-3">
