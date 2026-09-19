@@ -63,26 +63,26 @@ const WeatherCard = ({
   // ── Safe data extraction ────────────────────────────────────────────────────
 
   const current = weather?.current ?? {};
-  const today   = weather?.daily?.[0] ?? null; // first daily entry = today's forecast
+  const daily   = weather?.daily ?? [];
+  const today   = daily[0] ?? null; 
 
-  // Current conditions (real Open-Meteo values)
+  // Current conditions
   const temperature = current.temperature   != null ? Math.round(current.temperature) : null;
   const humidity    = current.humidity      != null ? current.humidity                : null;
   const windSpeed   = current.windSpeed     != null ? current.windSpeed               : null;
   const weatherCode = current.weatherCode;
 
-  // Today's forecast from daily array (safe access — array may be empty or absent)
-  const rainProbability = today?.precipitationProbability != null
-    ? today.precipitationProbability
-    : null;
-  const precipitationToday = today?.precipitation != null
-    ? today.precipitation
-    : null;
+  // Today's summary
+  const tempHigh = today?.temperatureMax != null ? Math.round(today.temperatureMax) : null;
+  const tempLow  = today?.temperatureMin != null ? Math.round(today.temperatureMin) : null;
+  const rainChance = today?.precipitationProbability != null ? today.precipitationProbability : null;
+  const expectedRain = today?.precipitation != null ? today.precipitation : null;
+  const et0 = today?.et0 != null ? today.et0 : null;
 
-  // Weather condition (emoji + label) from WMO code
+  // Weather condition (emoji + label) from WMO code for current
   const condition = getWeatherCondition(weatherCode);
 
-  // Location label from backend (Open-Meteo snaps coords to nearest grid point)
+  // Location label from backend
   const loc = weather?.location ?? null;
   const locationLabel = loc?.latitude != null && loc?.longitude != null
     ? (() => {
@@ -100,6 +100,9 @@ const WeatherCard = ({
     day: 'numeric', month: 'short', year: 'numeric',
   });
 
+  // 7-Day Forecast (next 6 days)
+  const upcomingDays = daily.slice(1, 7);
+
   // Cache age label
   const cacheAgeLabel = formatCacheAge(lastUpdated);
 
@@ -112,9 +115,8 @@ const WeatherCard = ({
       <div>
         <div className="flex justify-between items-start mb-1">
           <h3 className="text-xs font-semibold text-gray-400 tracking-wide">
-            Weather's today
+            Current Weather
           </h3>
-          {/* Fallback badge: shown when using Bengaluru default coordinates */}
           {isFallback && (
             <span
               title={geoError || 'Using default location (Bengaluru)'}
@@ -125,17 +127,14 @@ const WeatherCard = ({
           )}
         </div>
 
-        {/* Location label from backend */}
         {locationLabel && (
           <p className="text-[10px] text-gray-400 mb-2 truncate" title={locationLabel}>
             📍 {locationLabel}
           </p>
         )}
 
-        {/* ── Main weather section ── */}
+        {/* ── Section 1: Right Now ── */}
         <div className="flex items-center justify-between mt-1">
-
-          {/* Left: day, date, temperature, rain info */}
           <div>
             <h4 className="text-xl font-bold text-gray-900">{displayDay}</h4>
             <p className="text-xs text-gray-400 font-medium">({displayDate})</p>
@@ -144,19 +143,9 @@ const WeatherCard = ({
               <div className="text-3xl font-black text-gray-900 tracking-tight">
                 {temperature != null ? `${temperature}°C` : '--'}
               </div>
-              {/* Rain probability + today's total precipitation */}
-              <p className="text-xs text-gray-400 font-medium mt-1">
-                {rainProbability != null
-                  ? `${rainProbability}% chance of rain`
-                  : 'Rain chance: N/A'}
-                {precipitationToday != null && precipitationToday > 0
-                  ? ` · ${precipitationToday}mm today`
-                  : ''}
-              </p>
             </div>
           </div>
 
-          {/* Right: large weather condition emoji + label */}
           <div className="flex flex-col items-center justify-center ml-4">
             <span
               className="text-5xl leading-none"
@@ -170,61 +159,120 @@ const WeatherCard = ({
             </span>
           </div>
         </div>
-      </div>
 
-      {/* ── Bottom metrics row ── */}
-      <div>
-        <div className="grid grid-cols-3 pt-5 border-t border-gray-100 text-xs font-semibold text-gray-600 mt-4">
-
-          {/* Wind speed */}
+        {/* Current Wind & Humidity */}
+        <div className="flex gap-4 mt-3 text-xs font-semibold text-gray-600">
           <div className="flex items-center gap-1.5">
             <svg className="w-4 h-4 text-gray-400 stroke-current" fill="none" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span>{windSpeed != null ? `${windSpeed}Km/h` : '--'}</span>
+            <span>Wind: {windSpeed != null ? `${windSpeed} Km/h` : '--'}</span>
           </div>
-
-          {/* Humidity */}
-          <div className="flex items-center justify-center gap-1.5">
+          <div className="flex items-center gap-1.5">
             <svg className="w-4 h-4 text-gray-400 fill-current" viewBox="0 0 24 24">
               <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
             </svg>
-            <span>{humidity != null ? `${humidity}%` : '--'}</span>
-          </div>
-
-          {/* Rain probability — real Open-Meteo daily data, replaces mock pressure */}
-          <div className="flex items-center justify-end gap-1.5">
-            <svg className="w-4 h-4 text-gray-400 stroke-current" fill="none" strokeWidth="2" viewBox="0 0 24 24">
-              <path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25" strokeLinecap="round" strokeLinejoin="round" />
-              <line x1="8" y1="16" x2="8" y2="21" strokeLinecap="round" />
-              <line x1="12" y1="19" x2="12" y2="23" strokeLinecap="round" />
-              <line x1="16" y1="16" x2="16" y2="21" strokeLinecap="round" />
-            </svg>
-            <span>{rainProbability != null ? `${rainProbability}%` : '--'}</span>
+            <span>Humidity: {humidity != null ? `${humidity}%` : '--'}</span>
           </div>
         </div>
-
-        {/* ── Cache / freshness indicator ── */}
-        {cacheAgeLabel && (
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
-            <span
-              className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
-                isCached
-                  ? 'bg-gray-100 text-gray-500'
-                  : 'bg-green-50 text-green-600'
-              }`}
-            >
-              {isCached ? `Offline · ${cacheAgeLabel.toLowerCase().replace('updated ', '').replace('last updated ', '')}` : cacheAgeLabel}
-            </span>
-            {/* Subtle spinning dot while a background refresh is in flight */}
-            {weatherLoading && !isCached && (
-              <span className="text-[9px] text-gray-400 animate-pulse">Refreshing…</span>
-            )}
-          </div>
-        )}
       </div>
+
+      <hr className="my-4 border-gray-100" />
+
+      {/* ── Section 2: Today's Summary ── */}
+      <div>
+        <h3 className="text-xs font-semibold text-gray-400 tracking-wide mb-3">
+          Today's Summary
+        </h3>
+        <div className="grid grid-cols-2 gap-y-3 gap-x-4">
+          {/* High / Low */}
+          <div>
+            <p className="text-[10px] text-gray-400 font-medium">High / Low</p>
+            <p className="text-sm font-semibold text-gray-800">
+              {tempHigh != null && tempLow != null ? `${tempHigh}° / ${tempLow}°` : '--'}
+            </p>
+          </div>
+          
+          {/* Rain */}
+          <div>
+            <p className="text-[10px] text-gray-400 font-medium">Rainfall (Chance)</p>
+            <p className="text-sm font-semibold text-gray-800">
+              {expectedRain != null ? `${expectedRain} mm` : '--'}
+              <span className="text-xs font-normal text-gray-500 ml-1">
+                ({rainChance != null ? `${rainChance}%` : '--'})
+              </span>
+            </p>
+          </div>
+
+          {/* ET0 */}
+          <div className="col-span-2">
+            <p className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
+              ET₀ <span className="text-[9px] font-normal text-gray-400">· Reference water loss</span>
+            </p>
+            <p className="text-sm font-semibold text-gray-800">
+              {et0 != null ? `${et0} mm` : '--'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <hr className="my-4 border-gray-100" />
+
+      {/* ── Section 3: Upcoming 7 Days (Scrollable) ── */}
+      <div>
+        <h3 className="text-xs font-semibold text-gray-400 tracking-wide mb-3">
+          Upcoming
+        </h3>
+        <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+          {upcomingDays.map((dayData, i) => {
+            const dateObj = new Date(dayData.date);
+            const shortDay = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+            const dayCondition = getWeatherCondition(dayData.weatherCode);
+            const dayHigh = dayData.temperatureMax != null ? Math.round(dayData.temperatureMax) : '--';
+            const dayLow = dayData.temperatureMin != null ? Math.round(dayData.temperatureMin) : '--';
+            const dayRainProb = dayData.precipitationProbability != null ? dayData.precipitationProbability : '--';
+
+            return (
+              <div key={i} className="flex flex-col items-center min-w-[64px] bg-gray-50 rounded-2xl py-2 px-1 flex-shrink-0 border border-gray-100">
+                <span className="text-[10px] font-medium text-gray-500">{shortDay}</span>
+                <span className="text-xl my-1" title={dayCondition.label}>{dayCondition.emoji}</span>
+                <span className="text-[10px] font-bold text-gray-800">{dayHigh}°</span>
+                <span className="text-[10px] font-medium text-gray-400">{dayLow}°</span>
+                <div className="flex items-center gap-0.5 mt-1 text-[9px] font-medium text-blue-500">
+                  <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+                  </svg>
+                  {dayRainProb !== '--' ? `${dayRainProb}%` : '--'}
+                </div>
+              </div>
+            );
+          })}
+          {upcomingDays.length === 0 && (
+            <p className="text-xs text-gray-400 italic">Forecast unavailable</p>
+          )}
+        </div>
+      </div>
+
+      {/* ── Cache / freshness indicator ── */}
+      {cacheAgeLabel && (
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
+          <span
+            className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
+              isCached
+                ? 'bg-gray-100 text-gray-500'
+                : 'bg-green-50 text-green-600'
+            }`}
+          >
+            {isCached ? `Offline · ${cacheAgeLabel.toLowerCase().replace('updated ', '').replace('last updated ', '')}` : cacheAgeLabel}
+          </span>
+          {weatherLoading && !isCached && (
+            <span className="text-[9px] text-gray-400 animate-pulse">Refreshing…</span>
+          )}
+        </div>
+      )}
     </div>
   );
 };
 
 export default WeatherCard;
+
