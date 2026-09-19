@@ -1,0 +1,4 @@
+.venv
+requirements.txt
+test_images/
+results/
