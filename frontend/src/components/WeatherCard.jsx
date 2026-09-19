@@ -1,6 +1,7 @@
 import React from 'react';
 import { getWeatherCondition } from '../utils/weatherCodes';
 import { formatCacheAge } from '../utils/weatherCache';
+import { generateWeatherInsights } from '../utils/weatherDecisionEngine';
 
 /**
  * WeatherCard
@@ -105,6 +106,9 @@ const WeatherCard = ({
 
   // Cache age label
   const cacheAgeLabel = formatCacheAge(lastUpdated);
+
+  // Generate actionable insights based strictly on weather
+  const insights = generateWeatherInsights(weather);
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -218,7 +222,26 @@ const WeatherCard = ({
 
       <hr className="my-4 border-gray-100" />
 
-      {/* ── Section 3: Upcoming 7 Days (Scrollable) ── */}
+      {/* ── Section 3: Today's Advice ── */}
+      <div>
+        <h3 className="text-xs font-semibold text-gray-400 tracking-wide mb-3 flex items-center gap-1.5">
+          <span>🌾</span> Today's Advice
+        </h3>
+        <div className="flex flex-col gap-2">
+          {insights.map((insight, index) => (
+            <div key={index} className="flex items-start gap-2 bg-gray-50/80 rounded-xl p-2.5 border border-gray-50/50">
+              <span className="text-sm leading-none mt-0.5">{insight.icon}</span>
+              <p className="text-[11px] font-medium text-gray-700 leading-snug">
+                {insight.text}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <hr className="my-4 border-gray-100" />
+
+      {/* ── Section 4: Upcoming 7 Days (Scrollable) ── */}
       <div>
         <h3 className="text-xs font-semibold text-gray-400 tracking-wide mb-3">
           Upcoming
