@@ -1,0 +1,267 @@
+#include <WiFi.h>
+#include <WebServer.h>
+#include <DHT.h>
+#include <ESP32Servo.h>
+
+#define DHT_PIN 4
+#define DHTTYPE DHT11       // Change to DHT22 if required
+
+#define SOIL_PIN 1
+#define TRIG_PIN 5
+#define ECHO_PIN 6
+#define SERVO_PIN 7
+
+#define IN1 8
+#define IN2 9
+#define IN3 10
+#define IN4 11
+#define ENA 12
+#define ENB 13
+
+const char* AP_SSID = "SmartFarmBot";
+const char* AP_PASS = "farmrobot123";
+
+const int SERVO_HOME = 10;
+const int SERVO_SOIL = 80;
+
+const int SOIL_DRY_RAW = 3000;   // calibrate
+const int SOIL_WET_RAW = 1200;   // calibrate
+
+int speedPWM = 150;
+String directionNow = "STOP";
+
+DHT dht(DHT_PIN, DHTTYPE);
+Servo soilServo;
+WebServer server(80);
+
+float distanceCM() {
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+  unsigned long us = pulseIn(ECHO_PIN, HIGH, 30000);
+  if (!us) return 999.0;
+  return us * 0.0343f / 2.0f;
+}
+
+int soilPercent() {
+  int raw = analogRead(SOIL_PIN);
+  int pct = map(raw, SOIL_DRY_RAW, SOIL_WET_RAW, 0, 100);
+  return constrain(pct, 0, 100);
+}
+
+void pwmWrite(int left, int right) {
+  ledcWrite(ENA, left);
+  ledcWrite(ENB, right);
+}
+
+void stopRobot() {
+  digitalWrite(IN1, LOW); digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW); digitalWrite(IN4, LOW);
+  pwmWrite(0, 0);
+  directionNow = "STOP";
+}
+
+void forwardRobot() {
+  if (distanceCM() < 25) {
+    stopRobot();
+    directionNow = "OBSTACLE";
+    return;
+  }
+  digitalWrite(IN1, HIGH); digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH); digitalWrite(IN4, LOW);
+  pwmWrite(speedPWM, speedPWM);
+  directionNow = "FORWARD";
+}
+
+void backwardRobot() {
+  digitalWrite(IN1, LOW); digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW); digitalWrite(IN4, HIGH);
+  pwmWrite(speedPWM, speedPWM);
+  directionNow = "BACKWARD";
+}
+
+void leftRobot() {
+  digitalWrite(IN1, LOW); digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH); digitalWrite(IN4, LOW);
+  pwmWrite(speedPWM, speedPWM);
+  directionNow = "LEFT";
+}
+
+void rightRobot() {
+  digitalWrite(IN1, HIGH); digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW); digitalWrite(IN4, HIGH);
+  pwmWrite(speedPWM, speedPWM);
+  directionNow = "RIGHT";
+}
+
+void statusAPI() {
+  float t = dht.readTemperature();
+  float h = dht.readHumidity();
+  float d = distanceCM();
+  int raw = analogRead(SOIL_PIN);
+  int soil = soilPercent();
+
+  String j = "{";
+  j += "\"temperature\":" + String(isnan(t) ? -999 : t, 1) + ",";
+  j += "\"humidity\":" + String(isnan(h) ? -999 : h, 1) + ",";
+  j += "\"soilPercent\":" + String(soil) + ",";
+  j += "\"soilRaw\":" + String(raw) + ",";
+  j += "\"distanceCm\":" + String(d, 1) + ",";
+  j += "\"obstacle\":" + String(d < 25 ? "true" : "false") + ",";
+  j += "\"direction\":\"" + directionNow + "\"";
+  j += "}";
+  server.send(200, "application/json", j);
+}
+
+void moveAPI() {
+  String d = server.arg("dir");
+
+  if (d == "forward") forwardRobot();
+  else if (d == "backward") backwardRobot();
+  else if (d == "left") leftRobot();
+  else if (d == "right") rightRobot();
+  else stopRobot();
+
+  server.send(200, "application/json",
+              "{\"ok\":true,\"direction\":\"" + directionNow + "\"}");
+}
+
+void soilMeasureAPI() {
+  stopRobot();
+
+  soilServo.write(SERVO_SOIL);
+  delay(1200);
+
+  int raw = analogRead(SOIL_PIN);
+  int pct = map(raw, SOIL_DRY_RAW, SOIL_WET_RAW, 0, 100);
+  pct = constrain(pct, 0, 100);
+
+  soilServo.write(SERVO_HOME);
+
+  String j = "{\"soilRaw\":" + String(raw) +
+             ",\"soilPercent\":" + String(pct) + "}";
+  server.send(200, "application/json", j);
+}
+
+void servoAPI() {
+  int angle = constrain(server.arg("angle").toInt(), 0, 180);
+  soilServo.write(angle);
+  server.send(200, "application/json",
+              "{\"angle\":" + String(angle) + "}");
+}
+
+void dashboard() {
+  const char html[] PROGMEM = R"HTML(
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Smart Farm Robot</title>
+<style>
+body{font-family:Arial;margin:0;padding:18px;background:#eef5ee}
+.card{background:#fff;padding:16px;margin:10px 0;border-radius:14px}
+button{font-size:19px;padding:13px;margin:4px;border:0;border-radius:10px}
+pre{white-space:pre-wrap}
+</style>
+</head>
+<body>
+<h2>Smart Farming Robot</h2>
+
+<div class="card">
+<b>Live sensor data</b>
+<pre id="data">Loading...</pre>
+</div>
+
+<div class="card">
+<button onclick="move('forward')">▲ Forward</button><br>
+<button onclick="move('left')">◀ Left</button>
+<button onclick="move('stop')">■ Stop</button>
+<button onclick="move('right')">Right ▶</button><br>
+<button onclick="move('backward')">▼ Back</button>
+</div>
+
+<div class="card">
+<button onclick="measure()">Lower soil probe → Measure → Raise</button>
+</div>
+
+<script>
+async function move(d){
+  await fetch('/api/move?dir='+d);
+  load();
+}
+async function measure(){
+  const r=await fetch('/api/soil');
+  const j=await r.json();
+  alert('Soil moisture: '+j.soilPercent+'%');
+  load();
+}
+async function load(){
+  const r=await fetch('/api/status');
+  const j=await r.json();
+  document.getElementById('data').textContent =
+    JSON.stringify(j,null,2);
+}
+setInterval(load,1000);
+load();
+</script>
+</body>
+</html>
+)HTML";
+
+  server.send(200, "text/html", html);
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+
+  pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
+
+  // ESP32 Arduino core 3.x LEDC API
+  ledcAttach(ENA, 1000, 8);
+  ledcAttach(ENB, 1000, 8);
+
+  dht.begin();
+
+  soilServo.setPeriodHertz(50);
+  soilServo.attach(SERVO_PIN, 500, 2400);
+  soilServo.write(SERVO_HOME);
+
+  stopRobot();
+
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(AP_SSID, AP_PASS);
+
+  Serial.println();
+  Serial.println("SMART FARM ROBOT");
+  Serial.print("Wi-Fi: ");
+  Serial.println(AP_SSID);
+  Serial.print("Dashboard: http://");
+  Serial.println(WiFi.softAPIP());
+
+  server.on("/", dashboard);
+  server.on("/api/status", statusAPI);
+  server.on("/api/move", moveAPI);
+  server.on("/api/soil", soilMeasureAPI);
+  server.on("/api/servo", servoAPI);
+
+  server.begin();
+}
+
+void loop() {
+  server.handleClient();
+
+  // Basic safety stop while moving forward.
+  if (directionNow == "FORWARD" && distanceCM() < 25) {
+    stopRobot();
+    directionNow = "OBSTACLE";
+  }
+
+  delay(20);
+}
