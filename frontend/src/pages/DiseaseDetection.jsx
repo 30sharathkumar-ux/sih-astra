@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { predictPlantDisease } from '../services/api';
-import { UploadCloud, Image as ImageIcon, Camera, AlertCircle, CheckCircle, HelpCircle, XCircle } from 'lucide-react';
+import { predictPlantDisease, BACKEND_UNAVAILABLE_CODE } from '../services/api';
+import { UploadCloud, Image as ImageIcon, Camera, AlertCircle, CheckCircle, HelpCircle, XCircle, Info } from 'lucide-react';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB limit
 
@@ -11,6 +11,7 @@ const DiseaseDetection = () => {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [isDragActive, setIsDragActive] = useState(false);
+  const [backendUnavailable, setBackendUnavailable] = useState(false);
   
   const fileInputRef = useRef(null);
 
@@ -59,6 +60,7 @@ const DiseaseDetection = () => {
     setIsAnalyzing(true);
     setError(null);
     setResult(null);
+    setBackendUnavailable(false);
 
     try {
       const response = await predictPlantDisease(selectedFile);
@@ -70,7 +72,11 @@ const DiseaseDetection = () => {
       setResult(response);
     } catch (err) {
       console.error(err);
-      setError('Unable to analyze the image right now. Please try again.');
+      if (err.code === BACKEND_UNAVAILABLE_CODE) {
+        setBackendUnavailable(true);
+      } else {
+        setError('Unable to analyze the image right now. Please try again.');
+      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -81,6 +87,7 @@ const DiseaseDetection = () => {
     setPreviewUrl(null);
     setResult(null);
     setError(null);
+    setBackendUnavailable(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -210,6 +217,27 @@ const DiseaseDetection = () => {
         <div className="bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 p-4 rounded-2xl flex items-start gap-3 transition-colors">
           <XCircle className="w-5 h-5 text-red-500 dark:text-red-400 mt-0.5 shrink-0" />
           <p className="text-red-700 dark:text-red-300 text-sm font-medium">{error}</p>
+        </div>
+      )}
+
+      {/* ── BACKEND UNAVAILABLE NOTICE ── */}
+      {backendUnavailable && (
+        <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 p-5 rounded-2xl flex items-start gap-4 transition-colors">
+          <Info className="w-5 h-5 text-blue-500 dark:text-blue-400 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-blue-800 dark:text-blue-200 text-sm font-semibold">
+              AI analysis is available in the local demonstration environment.
+            </p>
+            <p className="text-blue-600 dark:text-blue-300 text-xs mt-1 leading-relaxed">
+              The deployed app does not include the AI backend. To use plant disease detection, run the project locally with the FastAPI server started.
+            </p>
+            <button
+              onClick={resetForm}
+              className="mt-3 text-xs font-semibold text-blue-700 dark:text-blue-300 underline underline-offset-2 hover:no-underline transition"
+            >
+              Try another image
+            </button>
+          </div>
         </div>
       )}
 
