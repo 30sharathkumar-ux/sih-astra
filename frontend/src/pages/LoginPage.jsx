@@ -30,9 +30,9 @@ const LoginPage = () => {
       {/* ── Left panel: branding / illustration ── */}
       <div className="hidden lg:flex lg:w-1/2 bg-brand-dark flex-col justify-between p-12 relative overflow-hidden">
         {/* Background decorative circles */}
-        <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-white/5"></div>
+        <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-white dark:bg-gray-800/5"></div>
         <div className="absolute top-1/3 -right-16 w-60 h-60 rounded-full bg-brand-lime/10"></div>
-        <div className="absolute -bottom-10 left-1/3 w-48 h-48 rounded-full bg-white/5"></div>
+        <div className="absolute -bottom-10 left-1/3 w-48 h-48 rounded-full bg-white dark:bg-gray-800/5"></div>
 
         {/* Logo */}
         <div className="relative z-10 flex items-center gap-3">
@@ -94,7 +94,7 @@ const LoginPage = () => {
                 key={i}
                 className={item === '→'
                   ? 'text-brand-lime/50 font-bold'
-                  : 'bg-white/10 text-white/80 text-[11px] font-semibold px-2.5 py-1 rounded-full'
+                  : 'bg-white dark:bg-gray-800/10 text-white/80 text-[11px] font-semibold px-2.5 py-1 rounded-full'
                 }
               >
                 {item}
@@ -119,8 +119,8 @@ const LoginPage = () => {
         <div className="w-full max-w-sm space-y-8">
           {/* Heading */}
           <div className="space-y-2">
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Welcome back 🌱</h1>
-            <p className="text-gray-500 text-sm leading-relaxed">
+            <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Welcome back 🌱</h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
               Monitor your farm smarter with AI-powered insights.
             </p>
           </div>
@@ -140,7 +140,7 @@ const LoginPage = () => {
           <button
             onClick={handleGoogleSignIn}
             disabled={isSigningIn || loading}
-            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border-2 border-gray-200 rounded-2xl text-gray-700 font-semibold text-sm hover:border-brand-lime hover:shadow-pop transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed group"
+            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl text-gray-700 dark:text-gray-200 font-semibold text-sm hover:border-brand-lime hover:shadow-pop transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed group"
           >
             {isSigningIn ? (
               <>

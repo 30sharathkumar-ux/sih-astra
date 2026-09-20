@@ -7,17 +7,17 @@ const ProductionSummary = ({ data }) => {
   const maxVal = 7000;
   
   return (
-    <div className="bg-white rounded-3xl p-6 shadow-card flex flex-col justify-between h-full">
+    <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-card flex flex-col justify-between h-full">
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900 tracking-tight">Summary of production</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">Summary of production</h2>
           <div className="flex items-center gap-2">
-            <button aria-label="Filter" className="w-8 h-8 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100" type="button">
+            <button aria-label="Filter" className="w-8 h-8 rounded-full bg-gray-50 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100" type="button">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" strokeLinecap="round" strokeLinejoin="round"></path>
               </svg>
             </button>
-            <button aria-label="Expand view" className="w-8 h-8 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100" type="button">
+            <button aria-label="Expand view" className="w-8 h-8 rounded-full bg-gray-50 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100" type="button">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M7 17L17 7M17 7H7M17 7v10" strokeLinecap="round" strokeLinejoin="round"></path>
               </svg>
@@ -25,9 +25,9 @@ const ProductionSummary = ({ data }) => {
           </div>
         </div>
         
-        <div className="flex flex-wrap items-center justify-between text-xs text-gray-500 mb-6 gap-2">
+        <div className="flex flex-wrap items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-6 gap-2">
           <span className="font-medium text-gray-400">Comparing with last year</span>
-          <div className="flex items-center gap-4 font-semibold text-gray-700">
+          <div className="flex items-center gap-4 font-semibold text-gray-700 dark:text-gray-200">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-sm bg-brand-lime"></span>
               <span className="text-[11px]">Current Year Production</span>
@@ -45,7 +45,7 @@ const ProductionSummary = ({ data }) => {
           {[5000, 4000, 3000, 2000, 1000, 0].map((val) => (
             <div key={val} className="flex items-center gap-3">
               <span className="w-6 text-right">{val}</span>
-              <div className={`flex-1 ${val === 0 ? 'border-b border-gray-200' : 'border-b border-gray-100'}`}></div>
+              <div className={`flex-1 ${val === 0 ? 'border-b border-gray-200 dark:border-gray-700' : 'border-b border-gray-100 dark:border-gray-700'}`}></div>
             </div>
           ))}
         </div>
@@ -74,7 +74,7 @@ const ProductionSummary = ({ data }) => {
                   style={{ height: `${(item.lastYear / maxVal) * 100}px` }}
                 ></div>
               </div>
-              <span className={`text-[10px] font-bold mt-2 ${item.month === 'Jun' ? 'text-gray-900' : 'text-gray-500'}`}>
+              <span className={`text-[10px] font-bold mt-2 ${item.month === 'Jun' ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
                 {item.month.toUpperCase()}
               </span>
             </div>

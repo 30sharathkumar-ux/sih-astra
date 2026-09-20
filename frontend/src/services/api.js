@@ -57,3 +57,29 @@ export const getProductionData = async () => {
   await new Promise(resolve => setTimeout(resolve, 500));
   return productionData;
 };
+
+/**
+ * Send a plant image to the FastAPI disease detection endpoint.
+ *
+ * @param {File} file - An image File object from a file input or drag-and-drop.
+ * @returns {Promise<{ success: boolean, detections: Array<{ class: string, confidence: number }>, model_classes: string[] }>}
+ * @throws {Error} if the request fails or the server returns a non-OK status.
+ */
+export const predictPlantDisease = async (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`${API_BASE_URL}/api/disease/predict`, {
+    method: 'POST',
+    body: formData,
+    // Do NOT set Content-Type manually — the browser sets it with the correct
+    // multipart/form-data boundary when using FormData.
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(errorBody.detail || `Disease API error: ${response.status}`);
+  }
+
+  return response.json();
+};

@@ -68,7 +68,7 @@ const VerticalFarmFeature = () => {
         
         <div>
           <div className="relative w-full py-1">
-            <div className="w-full bg-white/20 h-1 rounded-full overflow-hidden">
+            <div className="w-full bg-white dark:bg-gray-800/20 h-1 rounded-full overflow-hidden">
               <div className="bg-brand-lime h-1 rounded-full" style={{ width: '52%' }}></div>
             </div>
             <div className="absolute left-[52%] top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-brand-lime border-2 border-brand-dark shadow"></div>

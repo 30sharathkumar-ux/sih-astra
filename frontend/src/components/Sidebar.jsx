@@ -74,8 +74,8 @@ const Sidebar = () => {
               end={item.exact}
               className={({ isActive }) =>
                 isActive
-                  ? "flex items-center gap-4 px-4 py-3 rounded-2xl bg-white/10 text-brand-lime font-medium text-sm transition-colors group"
-                  : "flex items-center gap-4 px-4 py-3 rounded-2xl text-white/70 hover:text-white hover:bg-white/5 font-medium text-sm transition-colors group"
+                  ? "flex items-center gap-4 px-4 py-3 rounded-2xl bg-white dark:bg-gray-800/10 text-brand-lime font-medium text-sm transition-colors group"
+                  : "flex items-center gap-4 px-4 py-3 rounded-2xl text-white/70 hover:text-white hover:bg-white dark:bg-gray-800/5 font-medium text-sm transition-colors group"
               }
             >
               {({ isActive }) => (
@@ -110,7 +110,7 @@ const Sidebar = () => {
               <path d="M64 65 C68 65, 68 68, 64 70 Z" fill="#2A9D8F"></path>
             </svg>
           </div>
-          <button className="w-full py-2.5 bg-white text-gray-900 font-bold text-xs rounded-full shadow hover:bg-gray-50 transition active:scale-95 flex items-center justify-center gap-1" type="button">
+          <button className="w-full py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-bold text-xs rounded-full shadow hover:bg-gray-50 transition active:scale-95 flex items-center justify-center gap-1" type="button">
             <span className="text-sm font-semibold">+</span> Add farm
           </button>
         </div>

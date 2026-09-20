@@ -2,7 +2,7 @@ import React from 'react';
 
 const GreenhouseVisual = () => {
   return (
-    <div className="bg-white rounded-3xl overflow-hidden shadow-card relative group h-[190px] md:min-h-full">
+    <div className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-card relative group h-[190px] md:min-h-full">
       <div className="w-full h-full relative">
         <svg className="w-full h-full object-cover" fill="none" preserveAspectRatio="xMidYMid slice" viewBox="0 0 340 210">
           <rect fill="#EBF4F6" height="210" width="340"></rect>

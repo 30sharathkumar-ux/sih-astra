@@ -8,6 +8,8 @@ import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import AuthCallback from './pages/AuthCallback';
 import WeatherPage from './pages/Weather';
+import DiseaseDetection from './pages/DiseaseDetection';
+import Settings from './pages/Settings';
 
 // Simple placeholder for routes under development
 const Placeholder = ({ title }) => (
@@ -24,13 +26,23 @@ const Placeholder = ({ title }) => (
  * Only rendered for protected routes.
  */
 const AppShell = ({ children }) => (
-  <div className="min-h-screen flex flex-col lg:flex-row w-full bg-brand-surface font-sans antialiased text-gray-900">
+  <div className="min-h-screen flex flex-col lg:flex-row w-full font-sans antialiased transition-colors duration-200">
     <Sidebar />
     {children}
   </div>
 );
 
 const App = () => {
+  // Initialize theme on app load
+  React.useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
   return (
     <Router>
       <AuthProvider>
@@ -68,7 +80,7 @@ const App = () => {
             path="/disease-detection"
             element={
               <ProtectedRoute>
-                <AppShell><Placeholder title="Disease Detection (Edge AI)" /></AppShell>
+                <AppShell><DiseaseDetection /></AppShell>
               </ProtectedRoute>
             }
           />
@@ -92,7 +104,7 @@ const App = () => {
             path="/settings"
             element={
               <ProtectedRoute>
-                <AppShell><Placeholder title="Settings" /></AppShell>
+                <AppShell><Settings /></AppShell>
               </ProtectedRoute>
             }
           />

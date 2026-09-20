@@ -59,7 +59,7 @@ const Header = ({ farmData }) => {
         </div>
         <input
           type="text"
-          className="w-full pl-11 pr-4 py-3 text-sm bg-white border border-transparent rounded-full placeholder-gray-400 focus:outline-none focus:border-brand-dark/20 focus:ring-2 focus:ring-brand-lime shadow-sm transition-all"
+          className="w-full pl-11 pr-4 py-3 text-sm bg-white dark:bg-gray-800 border border-transparent rounded-full placeholder-gray-400 focus:outline-none focus:border-brand-dark/20 focus:ring-2 focus:ring-brand-lime shadow-sm transition-all"
           placeholder="Search plant here..."
         />
       </div>
@@ -67,14 +67,14 @@ const Header = ({ farmData }) => {
       {/* Right: Utilities + Profile */}
       <div className="flex items-center gap-3 self-end sm:self-center">
         {/* Messages */}
-        <button aria-label="Messages" className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-700 shadow-sm hover:bg-gray-50 btn-interactive" type="button">
+        <button aria-label="Messages" className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 btn-interactive" type="button">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
 
         {/* Notifications */}
-        <button aria-label="Notifications" className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-700 shadow-sm hover:bg-gray-50 btn-interactive" type="button">
+        <button aria-label="Notifications" className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 btn-interactive" type="button">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -106,7 +106,7 @@ const Header = ({ farmData }) => {
 
             {/* Name + Farm label */}
             <div className="hidden md:block leading-tight text-left">
-              <h4 className="font-bold text-sm text-gray-900 truncate max-w-[120px]">{displayName}</h4>
+              <h4 className="font-bold text-sm text-gray-900 dark:text-white truncate max-w-[120px]">{displayName}</h4>
               <p className="text-[11px] font-medium text-gray-400 truncate max-w-[120px]">{farmLabel}</p>
             </div>
 
@@ -118,30 +118,30 @@ const Header = ({ farmData }) => {
 
           {/* Dropdown menu */}
           {menuOpen && (
-            <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-pop border border-gray-100 py-2 z-50">
+            <div className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-gray-800 rounded-2xl shadow-pop border border-gray-100 dark:border-gray-700 py-2 z-50">
               {/* User info row at top of dropdown */}
-              <div className="px-4 py-3 border-b border-gray-100 mb-1">
-                <p className="text-sm font-bold text-gray-900 truncate">{displayName}</p>
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 mb-1">
+                <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{displayName}</p>
                 <p className="text-xs text-gray-400 truncate">{user?.email}</p>
               </div>
 
               <button
                 onClick={() => { setMenuOpen(false); navigate('/profile'); }}
-                className="flex items-center gap-3 w-full px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-brand-softGray transition-colors rounded-xl mx-0.5"
+                className="flex items-center gap-3 w-full px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-brand-softGray transition-colors rounded-xl mx-0.5"
               >
-                <User className="w-4 h-4 text-gray-500" />
+                <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                 Profile
               </button>
 
               <button
                 onClick={() => { setMenuOpen(false); navigate('/settings'); }}
-                className="flex items-center gap-3 w-full px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-brand-softGray transition-colors rounded-xl mx-0.5"
+                className="flex items-center gap-3 w-full px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-brand-softGray transition-colors rounded-xl mx-0.5"
               >
-                <Settings className="w-4 h-4 text-gray-500" />
+                <Settings className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                 Settings
               </button>
 
-              <div className="my-1 border-t border-gray-100"></div>
+              <div className="my-1 border-t border-gray-100 dark:border-gray-700"></div>
 
               <button
                 onClick={handleSignOut}

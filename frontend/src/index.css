@@ -4,9 +4,19 @@
 
 @layer base {
   body {
-    background-color: #F4F7F6;
-    color: #1a2e24;
+    @apply bg-[#F4F7F6] text-[#1a2e24];
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  html.dark body {
+    @apply bg-[#0B1121] text-gray-100;
+    background-image: 
+      radial-gradient(circle at 80% 20%, rgba(30, 58, 138, 0.15), transparent 40%),
+      radial-gradient(circle at 20% 80%, rgba(16, 185, 129, 0.05), transparent 40%),
+      linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+    background-attachment: fixed;
   }
 }
 
@@ -20,8 +30,7 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #CBD5E1;
-    border-radius: 9999px;
+    @apply bg-slate-300 dark:bg-gray-700 rounded-full;
   }
 
   /* Subtle smooth transitions */

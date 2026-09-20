@@ -33,8 +33,8 @@ const WeatherCard = ({
   // Still waiting for the browser to return a GPS position
   if (geoStatus === 'loading') {
     return (
-      <div className="bg-white rounded-3xl p-6 shadow-card flex flex-col justify-center items-center h-full gap-2">
-        <p className="text-gray-500 text-sm font-medium">Detecting your location…</p>
+      <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-card flex flex-col justify-center items-center h-full gap-2">
+        <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Detecting your location…</p>
         <p className="text-gray-400 text-xs">Requesting GPS permission</p>
       </div>
     );
@@ -43,8 +43,8 @@ const WeatherCard = ({
   // Geolocation resolved but weather data not yet available
   if (!weather && !weatherError) {
     return (
-      <div className="bg-white rounded-3xl p-6 shadow-card flex flex-col justify-center items-center h-full gap-2">
-        <p className="text-gray-500 text-sm font-medium">Loading weather data…</p>
+      <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-card flex flex-col justify-center items-center h-full gap-2">
+        <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Loading weather data…</p>
         {isFallback && geoError && (
           <p className="text-amber-500 text-xs text-center px-4">{geoError}</p>
         )}
@@ -55,7 +55,7 @@ const WeatherCard = ({
   // No data at all — both cache and network failed
   if (weatherError && !weather) {
     return (
-      <div className="bg-white rounded-3xl p-6 shadow-card flex flex-col justify-center items-center h-full gap-2">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-card flex flex-col justify-center items-center h-full gap-2">
         <p className="text-red-400 text-sm font-medium">Weather unavailable</p>
         <p className="text-gray-400 text-xs text-center px-4">{weatherError}</p>
       </div>
@@ -110,7 +110,7 @@ const WeatherCard = ({
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="bg-white rounded-3xl p-6 shadow-card flex flex-col justify-between h-full">
+    <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-card flex flex-col justify-between h-full">
 
       {/* ── Header row ── */}
       <div>
@@ -121,7 +121,7 @@ const WeatherCard = ({
         </div>
 
         <div>
-          <p className="text-[12px] font-semibold text-gray-700 truncate mb-0" title={locationHeadline}>
+          <p className="text-[12px] font-semibold text-gray-700 dark:text-gray-200 truncate mb-0" title={locationHeadline}>
             📍 {locationHeadline}
           </p>
           {hasValidLocation && locSecondaryLine && (
@@ -140,11 +140,11 @@ const WeatherCard = ({
         {/* ── Section 1: Right Now ── */}
         <div className="flex items-center justify-between mt-1">
           <div>
-            <h4 className="text-xl font-bold text-gray-900">{displayDay}</h4>
+            <h4 className="text-xl font-bold text-gray-900 dark:text-white">{displayDay}</h4>
             <p className="text-xs text-gray-400 font-medium">({displayDate})</p>
 
             <div className="mt-3">
-              <div className="text-3xl font-black text-gray-900 tracking-tight">
+              <div className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
                 {temperature != null ? `${temperature}°C` : '--'}
               </div>
             </div>
@@ -158,14 +158,14 @@ const WeatherCard = ({
             >
               {condition.emoji}
             </span>
-            <span className="text-[10px] font-semibold text-gray-500 mt-1.5 text-center">
+            <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 mt-1.5 text-center">
               {condition.label}
             </span>
           </div>
         </div>
 
         {/* Current Wind & Humidity */}
-        <div className="flex gap-4 mt-3 text-xs font-semibold text-gray-600">
+        <div className="flex gap-4 mt-3 text-xs font-semibold text-gray-600 dark:text-gray-300">
           <div className="flex items-center gap-1.5">
             <svg className="w-4 h-4 text-gray-400 stroke-current" fill="none" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" strokeLinecap="round" strokeLinejoin="round" />
@@ -181,7 +181,7 @@ const WeatherCard = ({
         </div>
       </div>
 
-      <hr className="my-4 border-gray-100" />
+      <hr className="my-4 border-gray-100 dark:border-gray-700" />
 
       {/* ── Section 2: Today's Summary ── */}
       <div>
@@ -192,7 +192,7 @@ const WeatherCard = ({
           {/* High / Low */}
           <div>
             <p className="text-[10px] text-gray-400 font-medium">High / Low</p>
-            <p className="text-sm font-semibold text-gray-800">
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
               {tempHigh != null && tempLow != null ? `${tempHigh}° / ${tempLow}°` : '--'}
             </p>
           </div>
@@ -200,9 +200,9 @@ const WeatherCard = ({
           {/* Rain */}
           <div>
             <p className="text-[10px] text-gray-400 font-medium">Rainfall (Chance)</p>
-            <p className="text-sm font-semibold text-gray-800">
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
               {expectedRain != null ? `${expectedRain} mm` : '--'}
-              <span className="text-xs font-normal text-gray-500 ml-1">
+              <span className="text-xs font-normal text-gray-500 dark:text-gray-400 ml-1">
                 ({rainChance != null ? `${rainChance}%` : '--'})
               </span>
             </p>
@@ -213,14 +213,14 @@ const WeatherCard = ({
             <p className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
               ET₀ <span className="text-[9px] font-normal text-gray-400">· Reference water loss</span>
             </p>
-            <p className="text-sm font-semibold text-gray-800">
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
               {et0 != null ? `${et0} mm` : '--'}
             </p>
           </div>
         </div>
       </div>
 
-      <hr className="my-4 border-gray-100" />
+      <hr className="my-4 border-gray-100 dark:border-gray-700" />
 
       {/* ── Section 3: Today's Advice ── */}
       <div>
@@ -231,7 +231,7 @@ const WeatherCard = ({
           {insights.map((insight, index) => (
             <div key={index} className="flex items-start gap-2 bg-gray-50/80 rounded-xl p-2.5 border border-gray-50/50">
               <span className="text-sm leading-none mt-0.5">{insight.icon}</span>
-              <p className="text-[11px] font-medium text-gray-700 leading-snug">
+              <p className="text-[11px] font-medium text-gray-700 dark:text-gray-200 leading-snug">
                 {insight.text}
               </p>
             </div>
@@ -239,7 +239,7 @@ const WeatherCard = ({
         </div>
       </div>
 
-      <hr className="my-4 border-gray-100" />
+      <hr className="my-4 border-gray-100 dark:border-gray-700" />
 
       {/* ── Section 4: Upcoming 7 Days (Scrollable) ── */}
       <div>
@@ -262,10 +262,10 @@ const WeatherCard = ({
             const dayRainProb = dayData.precipitationProbability != null ? dayData.precipitationProbability : '--';
 
             return (
-              <div key={i} className="flex flex-col items-center min-w-[64px] bg-gray-50 rounded-2xl py-2 px-1 flex-shrink-0 border border-gray-100">
-                <span className="text-[10px] font-medium text-gray-500">{shortDay}</span>
+              <div key={i} className="flex flex-col items-center min-w-[64px] bg-gray-50 rounded-2xl py-2 px-1 flex-shrink-0 border border-gray-100 dark:border-gray-700">
+                <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400">{shortDay}</span>
                 <span className="text-xl my-1" title={dayCondition.label}>{dayCondition.emoji}</span>
-                <span className="text-[10px] font-bold text-gray-800">{dayHigh}°</span>
+                <span className="text-[10px] font-bold text-gray-800 dark:text-gray-100">{dayHigh}°</span>
                 <span className="text-[10px] font-medium text-gray-400">{dayLow}°</span>
                 <div className="flex items-center gap-0.5 mt-1 text-[9px] font-medium text-blue-500">
                   <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24">
@@ -288,7 +288,7 @@ const WeatherCard = ({
           <span
             className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
               isCached
-                ? 'bg-gray-100 text-gray-500'
+                ? 'bg-gray-100 text-gray-500 dark:text-gray-400'
                 : 'bg-green-50 text-green-600'
             }`}
           >

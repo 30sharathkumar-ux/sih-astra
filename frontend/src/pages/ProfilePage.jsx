@@ -92,10 +92,10 @@ const ProfilePage = () => {
 
   return (
     <div className="flex-1 flex flex-col p-5 sm:p-6 lg:p-8 space-y-6 overflow-y-auto max-w-3xl w-full mx-auto">
-      <h1 className="text-2xl font-black text-gray-900 tracking-tight">My Profile</h1>
+      <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">My Profile</h1>
 
       {/* ── Profile identity card ── */}
-      <div className="bg-white rounded-3xl p-6 shadow-card flex items-center gap-5">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-card flex items-center gap-5">
         {avatarUrl ? (
           <img
             src={avatarUrl}
@@ -109,7 +109,7 @@ const ProfilePage = () => {
           </div>
         )}
         <div>
-          <h2 className="text-lg font-bold text-gray-900">{displayName}</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">{displayName}</h2>
           <p className="text-sm text-gray-400 font-medium">{email}</p>
           <span className="inline-flex items-center gap-1 mt-1 bg-brand-limeBg text-brand-dark text-xs font-bold px-2.5 py-0.5 rounded-full">
             <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
@@ -121,8 +121,8 @@ const ProfilePage = () => {
       </div>
 
       {/* ── Editable farm profile form ── */}
-      <form onSubmit={handleSave} className="bg-white rounded-3xl p-6 shadow-card space-y-6">
-        <h3 className="text-base font-bold text-gray-800 border-b border-gray-100 pb-3">
+      <form onSubmit={handleSave} className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-card space-y-6">
+        <h3 className="text-base font-bold text-gray-800 dark:text-gray-100 border-b border-gray-100 dark:border-gray-700 pb-3">
           Farm Information
         </h3>
 
@@ -143,7 +143,7 @@ const ProfilePage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {/* Full Name */}
           <div className="sm:col-span-2 space-y-1.5">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider" htmlFor="full_name">
+            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider" htmlFor="full_name">
               Full Name
             </label>
             <input
@@ -153,23 +153,23 @@ const ProfilePage = () => {
               value={form.full_name}
               onChange={handleChange}
               placeholder="Your full name"
-              className="w-full px-4 py-3 rounded-2xl border border-gray-200 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-transparent transition"
+              className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-transparent transition"
             />
           </div>
 
           {/* Email (read-only) */}
           <div className="sm:col-span-2 space-y-1.5">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
+            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
               Email (Google — read-only)
             </label>
-            <div className="w-full px-4 py-3 rounded-2xl border border-gray-100 bg-gray-50 text-sm text-gray-400 font-medium select-all">
+            <div className="w-full px-4 py-3 rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50 text-sm text-gray-400 font-medium select-all">
               {email}
             </div>
           </div>
 
           {/* Farm Name */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider" htmlFor="farm_name">
+            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider" htmlFor="farm_name">
               Farm Name
             </label>
             <input
@@ -179,13 +179,13 @@ const ProfilePage = () => {
               value={form.farm_name}
               onChange={handleChange}
               placeholder="e.g. My Green Farm"
-              className="w-full px-4 py-3 rounded-2xl border border-gray-200 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-transparent transition"
+              className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-transparent transition"
             />
           </div>
 
           {/* Farm Size */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider" htmlFor="farm_size">
+            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider" htmlFor="farm_size">
               Farm Size (acres)
             </label>
             <input
@@ -197,13 +197,13 @@ const ProfilePage = () => {
               value={form.farm_size}
               onChange={handleChange}
               placeholder="e.g. 2.5"
-              className="w-full px-4 py-3 rounded-2xl border border-gray-200 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-transparent transition"
+              className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-transparent transition"
             />
           </div>
 
           {/* Farm Location */}
           <div className="sm:col-span-2 space-y-1.5">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider" htmlFor="farm_location">
+            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider" htmlFor="farm_location">
               Farm Location
             </label>
             <div className="flex gap-2">
@@ -214,13 +214,13 @@ const ProfilePage = () => {
                 value={form.farm_location}
                 onChange={handleChange}
                 placeholder="e.g. Bengaluru, Karnataka"
-                className="flex-1 px-4 py-3 rounded-2xl border border-gray-200 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-transparent transition"
+                className="flex-1 px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-transparent transition"
               />
               <button
                 type="button"
                 onClick={handleUseLocation}
                 disabled={locating}
-                className="flex items-center gap-2 px-4 py-3 bg-brand-softGray border border-gray-200 rounded-2xl text-xs font-bold text-gray-700 hover:bg-brand-lime hover:border-brand-lime hover:text-brand-dark transition shrink-0 disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-3 bg-brand-softGray border border-gray-200 dark:border-gray-700 rounded-2xl text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-brand-lime hover:border-brand-lime hover:text-brand-dark transition shrink-0 disabled:opacity-50"
               >
                 {locating ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -237,7 +237,7 @@ const ProfilePage = () => {
 
           {/* Crop */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider" htmlFor="crop">
+            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider" htmlFor="crop">
               Primary Crop
             </label>
             <input
@@ -247,13 +247,13 @@ const ProfilePage = () => {
               value={form.crop}
               onChange={handleChange}
               placeholder="e.g. Tomato, Onion, Rice"
-              className="w-full px-4 py-3 rounded-2xl border border-gray-200 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-transparent transition"
+              className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-transparent transition"
             />
           </div>
 
           {/* Preferred Language */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider" htmlFor="preferred_language">
+            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider" htmlFor="preferred_language">
               Preferred Language
             </label>
             <select
@@ -261,7 +261,7 @@ const ProfilePage = () => {
               name="preferred_language"
               value={form.preferred_language}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-2xl border border-gray-200 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-transparent transition bg-white"
+              className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-transparent transition bg-white dark:bg-gray-800"
             >
               {LANGUAGES.map(lang => (
                 <option key={lang} value={lang}>{lang}</option>
@@ -271,7 +271,7 @@ const ProfilePage = () => {
 
           {/* Phone */}
           <div className="sm:col-span-2 space-y-1.5">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider" htmlFor="phone">
+            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider" htmlFor="phone">
               Phone Number <span className="text-gray-400 normal-case font-normal">(optional)</span>
             </label>
             <input
@@ -281,7 +281,7 @@ const ProfilePage = () => {
               value={form.phone}
               onChange={handleChange}
               placeholder="+91 9876543210"
-              className="w-full px-4 py-3 rounded-2xl border border-gray-200 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-transparent transition"
+              className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-transparent transition"
             />
           </div>
         </div>
