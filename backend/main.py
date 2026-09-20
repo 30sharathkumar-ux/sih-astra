@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Query, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
+import os
 
 # ── Plant disease detection ────────────────────────────────────────────────────
 import io
@@ -13,7 +14,9 @@ app = FastAPI(title="SIH Astra AgriTech API")
 # CORS Configuration
 # Covers common Vite local dev ports (5173–5176) — Vite increments the port
 # if the preferred one is already in use.
-origins = [
+# On Render, set the ALLOWED_ORIGINS environment variable (comma-separated)
+# to add your Vercel domain without touching this file.
+_default_origins = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://localhost:5175",
@@ -22,7 +25,15 @@ origins = [
     "http://127.0.0.1:5174",
     "http://127.0.0.1:5175",
     "http://127.0.0.1:5176",
+    # ── Deployed Vercel frontend ───────────────────────────────────────────────
+    "https://sihastra.vercel.app",
+    # Add preview deployments if needed: "https://sih-astra-*.vercel.app"
 ]
+
+# Optional: extend the list at runtime via a comma-separated env var.
+# Example (on Render): ALLOWED_ORIGINS=https://sihastra.vercel.app
+_extra = os.getenv("ALLOWED_ORIGINS", "")
+origins = _default_origins + [o.strip() for o in _extra.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
